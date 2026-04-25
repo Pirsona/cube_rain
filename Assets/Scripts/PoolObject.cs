@@ -11,29 +11,33 @@ public class PoolObject : MonoBehaviour
 
     private void Awake()
     {
-        _pool = new ObjectPool<Cube>(CreateObject, ActionOnGet, ActionOnRelease, ActionOnDestroy, true, _countPoolObject, _maximumCountPoolObject);
+        _pool = new ObjectPool<Cube>(CreateObject, ActivateCube, DeactivateCube, DestroyCube, true, _countPoolObject, _maximumCountPoolObject);
     }
 
-    public Cube CreateObject()
+    private void ReturnObject(Cube cube)
+    {
+        _pool.Release(cube);
+    }
+
+    private Cube CreateObject()
     {
         Cube cubeObject = Instantiate(_cube);
-        cubeObject.SetPool(_pool);
-
+        cubeObject.LifeTimeEnd += ReturnObject;
         return cubeObject;
     }
 
-    public void ActionOnGet(Cube cubeObject)
+    private void ActivateCube(Cube cubeObject)
     {
         cubeObject.gameObject.SetActive(true);
     }
 
-    public void ActionOnRelease(Cube cubeObject)
+    private void DeactivateCube(Cube cubeObject)
     {
         cubeObject.SetNormalStatus();
         cubeObject.gameObject.SetActive(false);
     }
 
-    public void ActionOnDestroy(Cube cubeObject)
+    private void DestroyCube(Cube cubeObject)
     {
         Destroy(cubeObject.gameObject);
     }

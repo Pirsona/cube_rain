@@ -1,19 +1,31 @@
+using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Pool;
 
 public class Cube : MonoBehaviour
 {
-    [SerializeField] ColorChanger _colorChanger;
+    [SerializeField] private ColorChanger _colorChanger;
+    [SerializeField] private CollisionDetector _collisionDetector;
     [SerializeField] private int _minTimeActive;
     [SerializeField] private int _maxTimeActive;
 
-    private ObjectPool<Cube> _poolSpawn;
+    public event Action<Cube> LifeTimeEnd;
+
     private bool _isNotHiting = true;
- 
-    private void OnCollisionEnter(Collision collision)
+
+    private void OnEnable()
     {
-        if (_isNotHiting && collision.transform.TryGetComponent(out Floor floor))
+        _collisionDetector.CollisionWithFloor += ConnectionWithFloor;
+    }
+
+    private void OnDisable()
+    {
+        _collisionDetector.CollisionWithFloor -= ConnectionWithFloor;
+    }
+
+    private void ConnectionWithFloor()
+    {
+        if(_isNotHiting)
         {
             _isNotHiting = false;
             _colorChanger.SetColor();
@@ -24,13 +36,8 @@ public class Cube : MonoBehaviour
 
     private IEnumerator StartDecay()
     {
-        yield return new WaitForSeconds(Random.Range(_minTimeActive,_maxTimeActive));
-        _poolSpawn.Release(this);
-    }
-
-    public void SetPool(ObjectPool<Cube> pool)
-    {
-        _poolSpawn = pool;
+        yield return new WaitForSeconds(UnityEngine.Random.Range(_minTimeActive,_maxTimeActive));
+        LifeTimeEnd?.Invoke(this);
     }
 
     public void SetNormalStatus()
